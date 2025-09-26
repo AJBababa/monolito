@@ -28,6 +28,7 @@ IsAdmin = (req, res, next) => {
 }
 
 
+
 app.get('/home', IsAuth, (req, res) => {
     res.render('home', { title: 'Home', param: req.query.param });
 });
