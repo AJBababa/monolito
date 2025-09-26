@@ -20,6 +20,13 @@ IsAuth = (req, res, next) => {
     res.redirect('/login');
 }
 
+IsAdmin = (req, res, next) => {
+    if (req.cookies && req.cookies.username) {
+        return next();
+    }
+    res.redirect('/login');
+}
+
 app.get('/home', IsAuth, (req, res) => {
     res.render('home', { title: 'Home', param: req.query.param });
 });
