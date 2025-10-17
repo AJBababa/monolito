@@ -24,10 +24,11 @@ async function main() {
     );    
 `);
 
-    await client.query(` INSERT INTO users (username, password, role) VALUES 
-    ($1, $2, $3)
-    ON CONFLICT (username) DO NOTHING`,
-      ['admin', await bcrypt.hash('adminpass', 10), 'admin']
+    await client.query(
+      `INSERT INTO users (username, password, role)
+   VALUES ($1, $2, $3)
+   ON CONFLICT (username) DO NOTHING`,
+      ['usuario', await bcrypt.hash('1234', 10), 'user'] // o 'admin'
     );
 
     await client.query(` INSERT INTO users (username, password, role) VALUES
