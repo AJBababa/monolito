@@ -1,26 +1,46 @@
-const Database = require('better-sqlite3');
-const db = new Database('database.sqlite', { verbose: console.log });
-const bcrypt = require("bcrypt")
+const { Client } = require('pg');
+const bcrypt = require('bcrypt')
 
-// Create a new table called "users"
+require('dotenv').config()
 
-const sentencia = db.prepare(
-    `CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL,
-  password TEXT NOT NULL,
-  role TEXT NOT NULL
-);`
-);
+const client = new Client({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD
+});
 
-sentencia.run();
+async function main() {
+  try {
+    await client.connect();
 
-const insert = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)');
+    await client.query(`
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(50) NOT NULL
+    );    
+`);
 
-const hashedPassword = bcrypt.hashSync("1234",10)
-insert.run('admin', hashedPassword, 'admin');
+    await client.query(` INSERT INTO users (username, password, role) VALUES 
+    ($1, $2, $3)
+    ON CONFLICT (username) DO NOTHING`,
+      ['admin', await bcrypt.hash('adminpass', 10), 'admin']
+    );
 
-const hashedPassword2 = bcrypt.hashSync("4567",10);
-insert.run('user1', hashedPassword2, 'user');
+    await client.query(` INSERT INTO users (username, password, role) VALUES
+    ($1, $2, $3)
+    ON CONFLICT (username) DO NOTHING`,
+      ['user', await bcrypt.hash('userpass', 10), 'user']
+    );
 
-//db.prepare('DELETE FROM users').run();
+    await client.end();
+
+  } catch (err) {
+    console.error('Error initializing database', err);
+  }
+}
+
+main();
